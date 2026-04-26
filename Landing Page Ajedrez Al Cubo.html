@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Ajedrez Al Cubo</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+--bg:#070b14;--panel-bg:rgba(8,14,28,0.92);--border:rgba(80,160,255,0.18);
+--accent:#3a8fff;--accent2:#9b5de5;--text:#a8c4e8;--text-dim:#4a6a8a;
+--green:#44ffaa;
+}
+html{scroll-behavior:smooth}
+body{background:radial-gradient(ellipse at 40% 40%,#0d1a35 0%,#070b14 70%);color:var(--text);font-family:'Share Tech Mono',monospace;min-height:100vh;overflow-x:hidden}
+
+/* NAVBAR */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;background:var(--panel-bg);backdrop-filter:blur(10px);border-bottom:1px solid var(--border);padding:0 2rem;height:60px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-family:'Orbitron',sans-serif;font-weight:900;font-size:1.1rem;background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;white-space:nowrap}
+.lang-btns{display:flex;gap:8px}
+.lang-btn{background:transparent;border:1px solid var(--border);color:var(--text-dim);font-family:'Share Tech Mono',monospace;font-size:.8rem;padding:6px 14px;border-radius:4px;cursor:pointer;transition:all .2s}
+.lang-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(58,143,255,.08)}
+.lang-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+/* PARTICLES */
+.particles{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.p{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--accent);opacity:.4;animation:float linear infinite}
+@keyframes float{0%{transform:translateY(100vh) translateX(0);opacity:0}10%{opacity:.4}90%{opacity:.4}100%{transform:translateY(-20px) translateX(var(--dx));opacity:0}}
+
+/* HERO */
+#hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:80px 2rem 2rem}
+.hero-title{font-family:'Orbitron',sans-serif;font-weight:900;font-size:clamp(1.8rem,5vw,3.5rem);line-height:1.2;margin-bottom:1.2rem;background:linear-gradient(135deg,#e8f4ff,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{font-size:clamp(.9rem,2vw,1.1rem);color:var(--text-dim);margin-bottom:2.5rem;letter-spacing:.05em}
+.cta-group{display:flex;flex-wrap:wrap;gap:1rem;justify-content:center;margin-bottom:2.5rem}
+.btn-primary{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;font-family:'Share Tech Mono',monospace;font-size:1rem;padding:14px 28px;border-radius:6px;cursor:pointer;transition:all .25s;text-decoration:none;display:inline-block}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 0 24px rgba(58,143,255,.45)}
+.btn-outline{background:transparent;color:var(--accent);border:1px solid var(--accent);font-family:'Share Tech Mono',monospace;font-size:1rem;padding:14px 28px;border-radius:6px;cursor:pointer;transition:all .25s;text-decoration:none;display:inline-block}
+.btn-outline:hover{background:rgba(58,143,255,.08);box-shadow:0 0 18px rgba(58,143,255,.25)}
+.badge{display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(255,60,60,.4);background:rgba(255,60,60,.06);padding:8px 20px;border-radius:20px;font-size:.85rem;color:#ff6060}
+.badge .dot{width:8px;height:8px;border-radius:50%;background:#ff3c3c;animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,60,60,.5)}50%{box-shadow:0 0 0 8px rgba(255,60,60,0)}}
+
+/* SECTIONS */
+section{padding:80px 2rem;max-width:1100px;margin:0 auto}
+.sec-title{font-family:'Orbitron',sans-serif;font-weight:700;font-size:clamp(1.4rem,3vw,2rem);text-align:center;margin-bottom:3rem;color:#d6eaff}
+
+/* FEATURES */
+#features{max-width:1100px;margin:0 auto;padding:80px 2rem}
+.cards-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem}
+.card{background:var(--panel-bg);border:1px solid var(--border);border-radius:12px;padding:2rem;transition:all .3s;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:0;border-radius:12px;padding:1px;background:linear-gradient(135deg,transparent,rgba(58,143,255,.15),transparent);-webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:0;transition:opacity .3s}
+.card:hover{transform:translateY(-4px);border-color:rgba(58,143,255,.4)}
+.card:hover::before{opacity:1}
+.card:hover{box-shadow:0 0 30px rgba(58,143,255,.12)}
+.card-icon{font-size:2rem;margin-bottom:1rem;display:block}
+.card-title{font-family:'Orbitron',sans-serif;font-size:1rem;color:#d6eaff;margin-bottom:.8rem}
+.card-desc{font-size:.88rem;color:var(--text-dim);line-height:1.6}
+
+/* PIECES */
+#piezas{max-width:1100px;margin:0 auto;padding:80px 2rem}
+.pieces-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1rem}
+.piece-card{background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;padding:1.5rem 1rem;text-align:center;transition:all .3s;cursor:default}
+.piece-card:hover{transform:scale(1.03);border-color:rgba(155,93,229,.5);box-shadow:0 0 24px rgba(155,93,229,.2)}
+.piece-sym{font-size:2.2rem;display:block;margin-bottom:.8rem}
+.piece-name{font-family:'Orbitron',sans-serif;font-size:.85rem;color:#d6eaff;margin-bottom:.6rem}
+.piece-desc{font-size:.78rem;color:var(--text-dim);line-height:1.5}
+
+/* REGISTRO */
+#registro{max-width:700px;margin:0 auto;padding:80px 2rem}
+.reg-box{position:relative;border-radius:16px;padding:3rem 2.5rem;background:var(--panel-bg);overflow:hidden}
+.reg-box::before{content:'';position:absolute;inset:-1px;border-radius:17px;background:linear-gradient(135deg,var(--accent),var(--accent2),var(--accent));background-size:200% 200%;animation:borderAnim 4s linear infinite;z-index:-1}
+@keyframes borderAnim{0%{background-position:0% 50%}50%{background-position:100% 50%}100%{background-position:0% 50%}}
+.reg-inner{position:relative;z-index:1}
+.reg-title{font-family:'Orbitron',sans-serif;font-size:clamp(1.2rem,3vw,1.6rem);color:#d6eaff;margin-bottom:.8rem;text-align:center}
+.reg-sub{text-align:center;font-size:.88rem;color:var(--text-dim);margin-bottom:.5rem}
+.counter{text-align:center;font-size:.88rem;color:var(--green);margin-bottom:1.8rem;min-height:1.2em}
+.form-row{display:flex;gap:1rem;flex-wrap:wrap}
+.email-input{flex:1;min-width:200px;background:rgba(10,20,40,.7);border:1px solid var(--border);border-radius:6px;color:var(--text);font-family:'Share Tech Mono',monospace;font-size:.95rem;padding:13px 16px;transition:border-color .2s;outline:none}
+.email-input:focus{border-color:var(--accent)}
+.email-input::placeholder{color:var(--text-dim)}
+.btn-submit{background:linear-gradient(90deg,var(--accent),var(--accent2));color:#fff;border:none;font-family:'Share Tech Mono',monospace;font-size:.95rem;padding:13px 28px;border-radius:6px;cursor:pointer;transition:all .25s;white-space:nowrap;min-width:140px}
+.btn-submit:hover{transform:translateY(-1px);box-shadow:0 0 20px rgba(58,143,255,.4)}
+.btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.form-msg{margin-top:1rem;font-size:.85rem;text-align:center;min-height:1.2em}
+.form-msg.ok{color:var(--green)}
+.form-msg.err{color:#ff6060}
+.email-err{font-size:.78rem;color:#ff6060;margin-top:.4rem;display:none}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* FOOTER */
+footer{text-align:center;padding:3rem 2rem;border-top:1px solid var(--border);color:var(--text-dim);font-size:.85rem}
+footer a{color:var(--text-dim);text-decoration:none;margin:0 .8rem;transition:color .2s}
+footer a:hover{color:var(--accent)}
+
+/* MOBILE */
+@media(max-width:600px){
+  nav{padding:0 1rem}
+  .logo{font-size:.9rem}
+  .reg-box{padding:2rem 1.2rem}
+  .form-row{flex-direction:column}
+}
+</style>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav>
+  <div class="logo">♟ <span id="nav-logo">AJEDREZ AL CUBO</span></div>
+  <div class="lang-btns">
+    <button class="lang-btn active" onclick="setLang('es')">ES</button>
+    <button class="lang-btn" onclick="setLang('en')">EN</button>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="particles" id="particles"></div>
+  <h1 class="hero-title" id="hero-title">El ajedrez que desafía las 3 dimensiones</h1>
+  <p class="hero-sub" id="hero-sub">Un tablero 5×5×5 · 125 casillas · Infinitas estrategias</p>
+  <div class="badge">
+    <span class="dot"></span>
+    <span id="badge-text">🔴 BETA PRÓXIMAMENTE</span>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section id="features">
+  <h2 class="sec-title" id="feat-title">Características</h2>
+  <div class="cards-grid">
+    <div class="card">
+      <span class="card-icon">♟</span>
+      <div class="card-title" id="f1t">Ajedrez en 3D real</div>
+      <div class="card-desc" id="f1d">No es una simulación. El tablero existe en las 3 dimensiones simultáneamente.</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">🌐</span>
+      <div class="card-title" id="f2t">Multijugador online</div>
+      <div class="card-desc" id="f2d">Jugá contra amigos desde cualquier parte del mundo en tiempo real.</div>
+    </div>
+    <div class="card">
+      <span class="card-icon">🤖</span>
+      <div class="card-title" id="f3t">Jugá contra la IA</div>
+      <div class="card-desc" id="f3d">3 niveles de dificultad. Desde principiante hasta experto.</div>
+    </div>
+  </div>
+</section>
+
+<!-- PREVIEW 3D -->
+<section id="preview" style="max-width:1100px;margin:0 auto;padding:80px 2rem">
+  <h2 class="sec-title" id="preview-title">El Tablero en Acción</h2>
+  <p style="text-align:center;color:var(--text-dim);font-size:.9rem;margin-top:-2rem;margin-bottom:2.5rem" id="preview-sub">Jaque en 3D — Torre blanca traversa el eje Y completo hacia el Rey negro</p>
+  <div style="display:flex;gap:2rem;flex-wrap:wrap;justify-content:center;align-items:flex-start">
+    <div style="position:relative">
+      <canvas id="c3" width="480" height="480" style="display:block;cursor:grab;border-radius:12px"></canvas>
+      <div style="position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:.72rem;color:rgba(168,196,232,.45);white-space:nowrap;pointer-events:none" id="drag-hint">Arrastrá para rotar · Scroll para zoom</div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:1rem;justify-content:center;min-width:190px;max-width:240px">
+      <div style="background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;padding:1.1rem">
+        <div style="font-family:'Orbitron',sans-serif;font-size:.75rem;color:#3a8fff;margin-bottom:.7rem">MOVIMIENTO</div>
+        <div id="move-desc" style="font-size:.8rem;color:#a8c4e8;line-height:1.7">Torre ♖ blanca<br>(2,0,2) → (2,4,2)<br><span style="color:#44ffaa;font-weight:bold">¡JAQUE al Rey ♚!</span></div>
+      </div>
+      <div style="background:var(--panel-bg);border:1px solid var(--border);border-radius:10px;padding:1.1rem">
+        <div style="font-family:'Orbitron',sans-serif;font-size:.75rem;color:#9b5de5;margin-bottom:.7rem">LEYENDA</div>
+        <div style="display:flex;flex-direction:column;gap:.45rem;font-size:.78rem;color:#a8c4e8">
+          <div style="display:flex;align-items:center;gap:.5rem"><span style="width:12px;height:12px;border-radius:50%;background:#ddeeff;border:1.5px solid #aac;display:inline-block;flex-shrink:0"></span>Pieza blanca</div>
+          <div style="display:flex;align-items:center;gap:.5rem"><span style="width:12px;height:12px;border-radius:50%;background:#1a1a3a;border:1.5px solid #667;display:inline-block;flex-shrink:0"></span>Pieza negra</div>
+          <div style="display:flex;align-items:center;gap:.5rem"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,80,80,.35);border:1px solid #f55;display:inline-block;flex-shrink:0"></span>Casilla en jaque</div>
+          <div style="display:flex;align-items:center;gap:.5rem"><span style="width:12px;height:12px;border-radius:2px;background:rgba(58,143,255,.25);border:1px solid #3a8fff;display:inline-block;flex-shrink:0"></span>Trayectoria Torre</div>
+          <div style="display:flex;align-items:center;gap:.5rem"><span style="width:12px;height:12px;border-radius:2px;background:rgba(255,255,255,.04);border:1px solid rgba(80,160,255,.15);display:inline-block;flex-shrink:0"></span>Casilla vacía</div>
+        </div>
+      </div>
+      <button onclick="toggleSpin()" id="spin-btn" style="background:linear-gradient(90deg,#3a8fff,#9b5de5);color:#fff;border:none;font-family:'Share Tech Mono',monospace;font-size:.85rem;padding:10px 18px;border-radius:6px;cursor:pointer">⏸ Pausar rotación</button>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  const canvas = document.getElementById('c3');
+  const W=480,H=480;
+  const renderer = new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+  renderer.setSize(W,H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setClearColor(0x000000,0);
+
+  const scene = new THREE.Scene();
+  const cam = new THREE.PerspectiveCamera(45,W/H,0.1,200);
+  cam.position.set(12,10,14);
+  cam.lookAt(0,0,0);
+
+  // Lights
+  scene.add(new THREE.AmbientLight(0x8899bb,0.7));
+  const dl=new THREE.DirectionalLight(0xaaccff,1.2);
+  dl.position.set(8,12,8);
+  scene.add(dl);
+  const dl2=new THREE.DirectionalLight(0x9955ff,0.4);
+  dl2.position.set(-8,-4,-6);
+  scene.add(dl2);
+
+  const STEP=2.0; // spacing between cells
+  const OFF=-4*STEP/2; // center offset for 5x5x5
+
+  // Pieces: [x,y,z, type, color]
+  const PIECES=[
+    [2,0,2,'R','w'], // white rook — attacker
+    [0,0,0,'K','w'], // white king
+    [1,0,1,'P','w'],
+    [3,0,3,'P','w'],
+    [4,0,4,'N','w'],
+    [0,0,4,'P','w'],
+    [2,4,2,'K','b'], // black king — in check
+    [0,4,0,'P','b'],
+    [4,4,0,'P','b'],
+    [1,4,3,'N','b'],
+    [3,3,1,'P','b'],
+    [4,2,4,'P','b'],
+  ];
+
+  // Rook path cells (x=2,z=2, y=1..4)
+  const rookPath=new Set(['2-1-2','2-2-2','2-3-2','2-4-2']);
+  const checkKey='2-4-2';
+
+  // Materials
+  const matLight=new THREE.MeshLambertMaterial({color:0x0d1f44,transparent:true,opacity:0.18,side:THREE.DoubleSide});
+  const matDark=new THREE.MeshLambertMaterial({color:0x050e22,transparent:true,opacity:0.22,side:THREE.DoubleSide});
+  const matPath=new THREE.MeshLambertMaterial({color:0x1a5fff,transparent:true,opacity:0.32,side:THREE.DoubleSide});
+  const matCheck=new THREE.MeshLambertMaterial({color:0xff2222,transparent:true,opacity:0.35,side:THREE.DoubleSide});
+
+  const edgeLight=new THREE.LineBasicMaterial({color:0x1a4488,transparent:true,opacity:0.35});
+  const edgePath=new THREE.LineBasicMaterial({color:0x3a8fff,transparent:true,opacity:0.8});
+  const edgeCheck=new THREE.LineBasicMaterial({color:0xff4444,transparent:true,opacity:0.9});
+  const edgeDark=new THREE.LineBasicMaterial({color:0x0d2244,transparent:true,opacity:0.25});
+
+  const cellGeo=new THREE.BoxGeometry(STEP*.88,STEP*.88,STEP*.88);
+  const edgeGeo=new THREE.EdgesGeometry(cellGeo);
+
+  const group=new THREE.Group();
+  scene.add(group);
+
+  // Build grid cells
+  for(let x=0;x<5;x++) for(let y=0;y<5;y++) for(let z=0;z<5;z++){
+    const key=`${x}-${y}-${z}`;
+    const isPath=rookPath.has(key);
+    const isCheck=key===checkKey;
+    const isLight=(x+y+z)%2===0;
+    const mat=isCheck?matCheck:isPath?matPath:isLight?matLight:matDark;
+    const eMat=isCheck?edgeCheck:isPath?edgePath:isLight?edgeLight:edgeDark;
+    const mesh=new THREE.Mesh(cellGeo,mat);
+    const px=OFF+x*STEP, py=OFF+y*STEP, pz=OFF+z*STEP;
+    mesh.position.set(px,py,pz);
+    group.add(mesh);
+    const wire=new THREE.LineSegments(edgeGeo,eMat);
+    wire.position.copy(mesh.position);
+    group.add(wire);
+  }
+
+  // Piece geometries
+  function makePiece(type,color){
+    const isW=color==='w';
+    const base=new THREE.Group();
+    const mBody=new THREE.MeshLambertMaterial({color:isW?0xddeeff:0x111133,emissive:isW?0x223366:0x0a0a22});
+    const mTop=new THREE.MeshLambertMaterial({color:isW?0xffffff:0x3344aa,emissive:isW?0x4466aa:0x1122aa});
+
+    if(type==='K'){
+      // Base cylinder + cross on top
+      const b=new THREE.Mesh(new THREE.CylinderGeometry(.22,.28,.55,12),mBody);
+      b.position.y=.27;
+      base.add(b);
+      const t=new THREE.Mesh(new THREE.CylinderGeometry(.12,.18,.18,12),mTop);
+      t.position.y=.65;
+      base.add(t);
+      const arm=new THREE.Mesh(new THREE.BoxGeometry(.28,.06,.06),mTop);
+      arm.position.y=.82;
+      base.add(arm);
+      const vert=new THREE.Mesh(new THREE.BoxGeometry(.06,.22,.06),mTop);
+      vert.position.y=.88;
+      base.add(vert);
+    } else if(type==='R'){
+      // Castle tower shape
+      const b=new THREE.Mesh(new THREE.CylinderGeometry(.2,.25,.5,8),mBody);
+      b.position.y=.25;
+      base.add(b);
+      const top=new THREE.Mesh(new THREE.BoxGeometry(.44,.14,.44),mTop);
+      top.position.y=.57;
+      base.add(top);
+      // battlements
+      for(let i=0;i<4;i++){
+        const batt=new THREE.Mesh(new THREE.BoxGeometry(.12,.14,.12),mTop);
+        const a=i*Math.PI/2;
+        batt.position.set(Math.cos(a)*.16,.72,Math.sin(a)*.16);
+        base.add(batt);
+      }
+    } else if(type==='N'){
+      // Knight — angular horse head suggestion
+      const b=new THREE.Mesh(new THREE.CylinderGeometry(.18,.24,.44,8),mBody);
+      b.position.y=.22;
+      base.add(b);
+      const neck=new THREE.Mesh(new THREE.BoxGeometry(.18,.3,.14),mBody);
+      neck.position.set(0,.52,.04);
+      base.add(neck);
+      const head=new THREE.Mesh(new THREE.BoxGeometry(.22,.18,.32),mTop);
+      head.position.set(0,.72,.1);
+      base.add(head);
+    } else {
+      // Pawn — sphere on cylinder
+      const b=new THREE.Mesh(new THREE.CylinderGeometry(.14,.2,.36,10),mBody);
+      b.position.y=.18;
+      base.add(b);
+      const ball=new THREE.Mesh(new THREE.SphereGeometry(.18,12,8),mTop);
+      ball.position.y=.52;
+      base.add(ball);
+    }
+    return base;
+  }
+
+  PIECES.forEach(([x,y,z,type,color])=>{
+    const p=makePiece(type,color);
+    const px=OFF+x*STEP, py=OFF+y*STEP-.35, pz=OFF+z*STEP;
+    p.position.set(px,py,pz);
+    group.add(p);
+    // glow point light on check king
+    if(type==='K'&&color==='b'){
+      const gl=new THREE.PointLight(0xff3333,1.8,3);
+      gl.position.set(px,py+.5,pz);
+      scene.add(gl);
+    }
+    if(type==='R'&&color==='w'){
+      const gl=new THREE.PointLight(0x3399ff,1.4,3);
+      gl.position.set(px,py+.5,pz);
+      scene.add(gl);
+    }
+  });
+
+  // Rook trajectory line
+  const pts=[];
+  for(let y=0;y<=4;y++) pts.push(new THREE.Vector3(OFF+2*STEP, OFF+y*STEP, OFF+2*STEP));
+  const lineMat=new THREE.LineBasicMaterial({color:0x3a8fff,transparent:true,opacity:0.6});
+  const lineGeo=new THREE.BufferGeometry().setFromPoints(pts);
+  scene.add(new THREE.Line(lineGeo,lineMat));
+
+  // Outer cage wireframe (5x5x5 bounding box)
+  const cageSize=STEP*4;
+  const cageGeo=new THREE.EdgesGeometry(new THREE.BoxGeometry(cageSize+STEP*.9,cageSize+STEP*.9,cageSize+STEP*.9));
+  const cageMat=new THREE.LineBasicMaterial({color:0x1a3a7a,transparent:true,opacity:0.25});
+  scene.add(new THREE.LineSegments(cageGeo,cageMat));
+
+  // Drag / orbit
+  let spinning=true;
+  let rotY=0.4, rotX=0.35;
+  let isDrag=false, lastMX=0, lastMY=0;
+  let zoom=1;
+
+  canvas.addEventListener('mousedown',e=>{isDrag=true;lastMX=e.clientX;lastMY=e.clientY;canvas.style.cursor='grabbing'});
+  window.addEventListener('mousemove',e=>{
+    if(!isDrag)return;
+    rotY+=(e.clientX-lastMX)*.008;
+    rotX+=(e.clientY-lastMY)*.008;
+    rotX=Math.max(-1.2,Math.min(1.2,rotX));
+    lastMX=e.clientX;lastMY=e.clientY;
+  });
+  window.addEventListener('mouseup',()=>{isDrag=false;canvas.style.cursor='grab'});
+  canvas.addEventListener('wheel',e=>{
+    zoom=Math.max(.5,Math.min(2.2,zoom+e.deltaY*.001));
+    cam.position.setLength(cam.position.length()*(1+e.deltaY*.001));
+    e.preventDefault();
+  },{passive:false});
+  // Touch
+  canvas.addEventListener('touchstart',e=>{isDrag=true;lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY},{passive:true});
+  canvas.addEventListener('touchmove',e=>{
+    if(!isDrag)return;
+    rotY+=(e.touches[0].clientX-lastMX)*.008;
+    rotX+=(e.touches[0].clientY-lastMY)*.008;
+    rotX=Math.max(-1.2,Math.min(1.2,rotX));
+    lastMX=e.touches[0].clientX;lastMY=e.touches[0].clientY;
+  },{passive:true});
+  canvas.addEventListener('touchend',()=>{isDrag=false});
+
+  // Rook animation
+  let rookT=0, rookDir=1;
+  const rookMesh=group.children.find((_,i)=>false); // we'll find by iterating
+  let rookPieceGroup=null;
+  group.children.forEach(c=>{
+    if(c.isGroup){
+      const wp=new THREE.Vector3();
+      c.getWorldPosition(wp);
+      if(Math.abs(wp.x-(OFF+2*STEP))<.1 && Math.abs(wp.z-(OFF+2*STEP))<.1 && Math.abs(wp.y-(OFF+0*STEP-.35))<.1){
+        rookPieceGroup=c;
+      }
+    }
+  });
+
+  let checkPulse=0;
+
+  window.toggleSpin=function(){
+    spinning=!spinning;
+    document.getElementById('spin-btn').textContent=spinning?'⏸ Pausar rotación':'▶ Reanudar rotación';
+  };
+
+  function animate(){
+    requestAnimationFrame(animate);
+    if(spinning&&!isDrag) rotY+=.005;
+
+    group.rotation.y=rotY;
+    group.rotation.x=rotX;
+
+    // Animate rook moving up and down the Y axis
+    rookT+=0.012*rookDir;
+    if(rookT>=1){rookT=1;rookDir=-1;}
+    if(rookT<=0){rookT=0;rookDir=1;}
+    if(rookPieceGroup){
+      rookPieceGroup.position.y=OFF+rookT*4*STEP-.35;
+    }
+
+    // Pulse check light
+    checkPulse+=0.06;
+    scene.children.forEach(c=>{
+      if(c.isPointLight&&c.color.r>.9) c.intensity=1.4+Math.sin(checkPulse)*.8;
+    });
+
+    renderer.render(scene,cam);
+  }
+  animate();
+})();
+</script>
+
+<!-- PIEZAS -->
+<section id="piezas">
+  <h2 class="sec-title" id="pieces-title">Las Piezas</h2>
+  <div class="pieces-grid">
+    <div class="piece-card">
+      <span class="piece-sym">♔</span>
+      <div class="piece-name" id="p1n">Rey</div>
+      <div class="piece-desc" id="p1d">1 casilla en cualquier dirección. 26 movimientos posibles.</div>
+    </div>
+    <div class="piece-card">
+      <span class="piece-sym">♖</span>
+      <div class="piece-name" id="p2n">Torre</div>
+      <div class="piece-desc" id="p2d">Línea recta en los 3 ejes. Sin límite de distancia.</div>
+    </div>
+    <div class="piece-card">
+      <span class="piece-sym">♗</span>
+      <div class="piece-name" id="p3n">Alfil</div>
+      <div class="piece-desc" id="p3d">Diagonal combinando 2 ejes. 12 direcciones.</div>
+    </div>
+    <div class="piece-card">
+      <span class="piece-sym">♞</span>
+      <div class="piece-name" id="p4n">Caballo</div>
+      <div class="piece-desc" id="p4d">Patrón en L en 3D. Salta piezas. 24 destinos.</div>
+    </div>
+    <div class="piece-card">
+      <span class="piece-sym">🦄</span>
+      <div class="piece-name" id="p5n">Unicornio</div>
+      <div class="piece-desc" id="p5d">Solo esquinas: 3 ejes simultáneos. 8 destinos únicos.</div>
+    </div>
+  </div>
+</section>
+
+<!-- REGISTRO -->
+<div id="registro" style="padding:40px 0">
+  <div style="max-width:700px;margin:0 auto;padding:0 2rem">
+    <div class="reg-box">
+      <div class="reg-inner">
+        <h2 class="reg-title" id="reg-title">Sé de los primeros en jugar</h2>
+        <p class="reg-sub" id="reg-sub">Acceso anticipado a la beta cerrada. Cupos limitados.</p>
+        <div class="counter" id="counter" style="display:none"></div>
+        <div class="form-row">
+          <input class="email-input" type="email" id="email-input" placeholder="tu@email.com"/>
+          <button class="btn-submit" id="submit-btn" onclick="submitForm()">
+            <span id="submit-label">Registrarme</span>
+          </button>
+        </div>
+        <div class="email-err" id="email-err">Por favor ingresá un email válido.</div>
+        <div class="form-msg" id="form-msg"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div style="margin-bottom:.8rem">© 2026 Ajedrez-al-Cubo</div>
+  <div>
+    <a href="https://github.com" id="ft-gh">GitHub</a>
+    <a href="https://tiktok.com" id="ft-tt">TikTok</a>
+  </div>
+</footer>
+
+<script>
+// ─── APPS SCRIPT URL ─────────────────────────────────────────────────────────
+// Reemplazá esta URL con la URL de deploy de tu Google Apps Script
+// (Instrucciones al final del archivo en los comentarios)
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzZw7Fv_H7bNW8AmkW5OObsQm5bCOgdkrz1ogjCfMFzOi9d2XwYhE3k9-XZusJ7_ryb/exec";
+// ─────────────────────────────────────────────────────────────────────────────
+
+// TRANSLATIONS
+const T = {
+  es: {
+    navLogo:"AJEDREZ AL CUBO",
+    heroTitle:"El ajedrez que desafía las 3 dimensiones",
+    heroSub:"Un tablero 5×5×5 · 125 casillas · Infinitas estrategias",
+
+    badgeText:"🔴 BETA PRÓXIMAMENTE",
+    featTitle:"Características",
+    f1t:"Ajedrez en 3D real",
+    f1d:"No es una simulación. El tablero existe en las 3 dimensiones simultáneamente.",
+    f2t:"Multijugador online",
+    f2d:"Jugá contra amigos desde cualquier parte del mundo en tiempo real.",
+    f3t:"Jugá contra la IA",
+    f3d:"3 niveles de dificultad. Desde principiante hasta experto.",
+    piecesTitle:"Las Piezas",
+    p1n:"Rey",p1d:"1 casilla en cualquier dirección. 26 movimientos posibles.",
+    p2n:"Torre",p2d:"Línea recta en los 3 ejes. Sin límite de distancia.",
+    p3n:"Alfil",p3d:"Diagonal combinando 2 ejes. 12 direcciones.",
+    p4n:"Caballo",p4d:"Patrón en L en 3D. Salta piezas. 24 destinos.",
+    p5n:"Unicornio",p5d:"Solo esquinas: 3 ejes simultáneos. 8 destinos únicos.",
+    regTitle:"Sé de los primeros en jugar",
+    regSub:"Acceso anticipado a la beta cerrada. Cupos limitados.",
+    counterText:(n)=>`🎮 ${n} jugadores ya se inscribieron`,
+    submitLabel:"Registrarme",
+    submitLoading:"Registrando...",
+    submitOk:"¡Listo! Te avisamos cuando arranque la beta.",
+    submitErr:"Hubo un error. Intentá de nuevo.",
+    emailErr:"Por favor ingresá un email válido.",
+    ftGh:"GitHub",ftTt:"TikTok",
+    lang:"es"
+  },
+  en: {
+    navLogo:"CHESS CUBED",
+    heroTitle:"Chess that challenges 3 dimensions",
+    heroSub:"A 5×5×5 board · 125 squares · Infinite strategies",
+
+    badgeText:"🔴 BETA COMING SOON",
+    featTitle:"Features",
+    f1t:"Real 3D Chess",
+    f1d:"Not a simulation. The board exists in all 3 dimensions simultaneously.",
+    f2t:"Online Multiplayer",
+    f2d:"Play against friends from anywhere in the world in real time.",
+    f3t:"Play vs AI",
+    f3d:"3 difficulty levels. From beginner to expert.",
+    piecesTitle:"The Pieces",
+    p1n:"King",p1d:"1 square in any direction. 26 possible moves.",
+    p2n:"Rook",p2d:"Straight line on all 3 axes. Unlimited distance.",
+    p3n:"Bishop",p3d:"Diagonal combining 2 axes. 12 directions.",
+    p4n:"Knight",p4d:"L-pattern in 3D. Jumps pieces. 24 destinations.",
+    p5n:"Unicorn",p5d:"Corners only: 3 axes at once. 8 unique destinations.",
+    regTitle:"Be among the first to play",
+    regSub:"Early access to the closed beta. Limited spots.",
+    counterText:(n)=>`🎮 ${n} players already signed up`,
+    submitLabel:"Sign me up",
+    submitLoading:"Signing up...",
+    submitOk:"Done! We'll notify you when the beta launches.",
+    submitErr:"Something went wrong. Please try again.",
+    emailErr:"Please enter a valid email.",
+    ftGh:"GitHub",ftTt:"TikTok",
+    lang:"en"
+  }
+};
+
+let currentLang = localStorage.getItem("chess3_lang") || "es";
+let registeredCount = null;
+
+function applyLang(l) {
+  const t = T[l];
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+  set("nav-logo", t.navLogo);
+  set("hero-title", t.heroTitle);
+  set("hero-sub", t.heroSub);
+  set("cta-beta", t.ctaBeta);
+  set("cta-how", t.ctaHow);
+  set("badge-text", t.badgeText);
+  set("feat-title", t.featTitle);
+  set("f1t", t.f1t); set("f1d", t.f1d);
+  set("f2t", t.f2t); set("f2d", t.f2d);
+  set("f3t", t.f3t); set("f3d", t.f3d);
+  set("pieces-title", t.piecesTitle);
+  set("p1n", t.p1n); set("p1d", t.p1d);
+  set("p2n", t.p2n); set("p2d", t.p2d);
+  set("p3n", t.p3n); set("p3d", t.p3d);
+  set("p4n", t.p4n); set("p4d", t.p4d);
+  set("p5n", t.p5n); set("p5d", t.p5d);
+  set("reg-title", t.regTitle);
+  set("reg-sub", t.regSub);
+  set("submit-label", t.submitLabel);
+  set("email-err", t.emailErr);
+  set("ft-gh", t.ftGh); set("ft-tt", t.ftTt);
+  if (registeredCount !== null) {
+    const c = document.getElementById("counter");
+    c.style.display = "block";
+    c.textContent = t.counterText(registeredCount);
+  }
+  document.querySelectorAll(".lang-btn").forEach(b => {
+    b.classList.toggle("active", b.textContent === l.toUpperCase());
+  });
+  document.documentElement.lang = l;
+}
+
+function setLang(l) {
+  currentLang = l;
+  localStorage.setItem("chess3_lang", l);
+  applyLang(l);
+}
+
+// PARTICLES
+function createParticles() {
+  const container = document.getElementById("particles");
+  for (let i = 0; i < 28; i++) {
+    const p = document.createElement("div");
+    p.className = "p";
+    const left = Math.random() * 100;
+    const dur = 8 + Math.random() * 14;
+    const delay = -Math.random() * 20;
+    const dx = (Math.random() - .5) * 120;
+    const size = 1.5 + Math.random() * 3;
+    p.style.cssText = `left:${left}%;bottom:0;width:${size}px;height:${size}px;--dx:${dx}px;animation-duration:${dur}s;animation-delay:${delay}s;opacity:${.15+Math.random()*.35}`;
+    container.appendChild(p);
+  }
+}
+
+// COUNTER FETCH
+async function fetchCounter() {
+  if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL === "TU_URL_AQUI") return;
+  try {
+    const r = await fetch(APPS_SCRIPT_URL + "?action=count", {method:"GET"});
+    const d = await r.json();
+    if (typeof d.count === "number") {
+      registeredCount = d.count;
+      const t = T[currentLang];
+      const c = document.getElementById("counter");
+      c.style.display = "block";
+      c.textContent = t.counterText(registeredCount);
+    }
+  } catch(e) { /* silently fail */ }
+}
+
+// FORM SUBMIT
+async function submitForm() {
+  const input = document.getElementById("email-input");
+  const btn = document.getElementById("submit-btn");
+  const label = document.getElementById("submit-label");
+  const msg = document.getElementById("form-msg");
+  const errEl = document.getElementById("email-err");
+  const t = T[currentLang];
+  const email = input.value.trim();
+
+  errEl.style.display = "none";
+  msg.className = "form-msg";
+  msg.textContent = "";
+
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.style.display = "block";
+    input.focus();
+    return;
+  }
+
+  btn.disabled = true;
+  label.innerHTML = `<span class="spinner"></span>${t.submitLoading}`;
+
+  try {
+    const body = JSON.stringify({email, lang: currentLang});
+    await fetch(APPS_SCRIPT_URL, {
+      method:"POST",
+      mode:"no-cors",
+      body
+    });
+    // no-cors no devuelve body, asumimos éxito si no hubo excepción
+    msg.className = "form-msg ok";
+    msg.textContent = t.submitOk;
+    input.value = "";
+    // incrementar contador local
+    if (registeredCount !== null) {
+      registeredCount++;
+    } else {
+      registeredCount = 1;
+    }
+    const c = document.getElementById("counter");
+    c.style.display = "block";
+    c.textContent = t.counterText(registeredCount);
+  } catch(e) {
+    msg.className = "form-msg err";
+    msg.textContent = t.submitErr;
+  } finally {
+    btn.disabled = false;
+    label.textContent = t.submitLabel;
+  }
+}
+
+// ENTER key on email input
+document.getElementById("email-input").addEventListener("keydown", e => {
+  if (e.key === "Enter") submitForm();
+});
+
+// INIT
+createParticles();
+applyLang(currentLang);
+fetchCounter();
+</script>
+
+<!--
+================================================================================
+ GOOGLE APPS SCRIPT — Instrucciones de deploy / Deployment Instructions
+================================================================================
+
+PASO 1: Ir a https://script.google.com y crear un nuevo proyecto.
+
+PASO 2: Reemplazar todo el contenido con el siguiente código:
+
+─────────────────────────────────────────────────────────────────────────────
+const SHEET_NAME = "Registros";
+
+function doPost(e) {
+  try {
+    const data = JSON.parse(e.postData.contents);
+    const email = data.email || "";
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return jsonResponse({result:"error", message:"Invalid email"});
+    }
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAME);
+    if (!sheet) {
+      sheet = ss.insertSheet(SHEET_NAME);
+      sheet.appendRow(["Email", "Lang", "Timestamp"]);
+    }
+    // Chequear duplicados
+    const emails = sheet.getRange(2, 1, Math.max(sheet.getLastRow()-1,1), 1).getValues().flat();
+    if (emails.includes(email)) {
+      return jsonResponse({result:"ok", duplicate:true, count: sheet.getLastRow()-1});
+    }
+    sheet.appendRow([email, data.lang || "es", new Date().toISOString()]);
+    const count = sheet.getLastRow() - 1;
+    return jsonResponse({result:"ok", count});
+  } catch(err) {
+    return jsonResponse({result:"error", message: err.toString()});
+  }
+}
+
+function doGet(e) {
+  if (e.parameter.action === "count") {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(SHEET_NAME);
+    const count = sheet ? Math.max(sheet.getLastRow() - 1, 0) : 0;
+    return jsonResponse({count});
+  }
+  return jsonResponse({status:"ok"});
+}
+
+function jsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+─────────────────────────────────────────────────────────────────────────────
+
+PASO 3: Vincular el script a una Google Spreadsheet:
+  - Recursos → Proyecto de Cloud → o bien crear un Spreadsheet y vincular.
+  - En el mismo Google Drive, crear una Spreadsheet vacía.
+  - En el editor de Apps Script: Proyecto > Configuración > Cambiar proyecto y
+    seleccionar la Spreadsheet, O simplemente abrir la Spreadsheet y crear el
+    script desde Extensiones > Apps Script.
+
+PASO 4: Deployar como Web App:
+  - Deploy → New deployment → Web App
+  - Execute as: "Me (tu cuenta)"
+  - Who has access: "Anyone" (para que el formulario público pueda llamarlo)
+  - Clic en Deploy y copiar la URL.
+
+PASO 5: Pegar la URL en la constante APPS_SCRIPT_URL al inicio del <script>.
+
+NOTAS:
+  - El script crea automáticamente la hoja "Registros" si no existe.
+  - Los duplicados no se guardan pero se cuentan.
+  - El contador GET requiere ?action=count al final de la URL.
+  - Si APPS_SCRIPT_URL = "TU_URL_AQUI", el formulario sigue funcionando
+    visualmente pero el envío fallará (expected, para desarrollo local).
+================================================================================
+-->
+
+</body>
+</html>
